@@ -17,29 +17,31 @@ namespace _22120_22131_Proj2
         ListaDupla<Cidade> cidades = new ListaDupla<Cidade>();
         Situacao situacao = Situacao.navegando;
 
-        int[,] matrizCaminhos;
-        List<Ligacao> ligacoes;
-        List<List<int>> caminhosEncontrados;
-        int melhorCaminhoIndex = -1;
+        int[,] matrizCaminhos; // Matriz adjascente que será utilizada na busca dos caminhos.
+        List<Ligacao> ligacoes; // Lista de ligações.
+        List<List<int>> caminhosEncontrados; // Todos os caminhos encontrados do ponto A ao B.
+        int melhorCaminhoIndex = -1; // Index do melhor caminho em caminhosEncontrados.
 
         public Form1()
         {
             InitializeComponent();
 
+            // Fecha o formulário caso nenhum arquivo seja selecionado:
             if (dlgAbrir.ShowDialog() != DialogResult.OK)
             {
                 Close();
                 return;
             }
 
-            LerArquivo(dlgAbrir.FileName);
+            LerArquivo(dlgAbrir.FileName); // Lê o arquivo com nomes das cidades.
 
+            // Exibe a primeira cidade:
             cidades.PosicionarNoPrimeiro();
             ExibirCidadeAtual();
 
-            LerArquivoCaminhos();
+            LerArquivoCaminhos(); // Lê o arquivo de caminhos.
 
-            AtualizarBotoes();
+            AtualizarBotoes(); // Atualiza os botões baseado na situacao atual.
         }
 
         private void ExibirCidadeAtual()
@@ -57,6 +59,7 @@ namespace _22120_22131_Proj2
         {
             cidades.LerDados(arquivo);
 
+            // Adiciona na lista:
             lbCidades.Items.Clear();
             lbCidades.Items.Add("Nome             X     Y");
             cidades.ExibirDados(lbCidades);
@@ -68,7 +71,6 @@ namespace _22120_22131_Proj2
 
             cidades.PosicionarNoPrimeiro();
             ExibirCidadeAtual();
-
 
             AtualizarBotoes();
         }
@@ -106,6 +108,7 @@ namespace _22120_22131_Proj2
 
         private void btnProcurar_Click(object sender, EventArgs e)
         {
+            // Coloca na situação de pesquisa:
             if (situacao != Situacao.pesquisando)
             {
                 situacao = Situacao.pesquisando;
@@ -115,6 +118,7 @@ namespace _22120_22131_Proj2
                 return;
             }
 
+            // Faz a pesquisa:
             int posAnterior = cidades.PosicaoAtual;
 
             if (cidades.Existe(new Cidade(txtNome.Text, (float)udX.Value, (float)udY.Value), out int posicao))
@@ -186,6 +190,7 @@ namespace _22120_22131_Proj2
 
             situacao = Situacao.navegando;
 
+            // Atualiza a lista:
             lbCidades.Items.Clear();
 
             lbCidades.Items.Add("Nome             X     Y");
@@ -300,6 +305,7 @@ namespace _22120_22131_Proj2
             }
         }
 
+        // Transforma a situação em editando:
         private void pbMapa_MouseClick(object sender, MouseEventArgs e)
         {
             udX.Value = Math.Round((decimal)e.X / pbMapa.Width, 3);
@@ -330,6 +336,7 @@ namespace _22120_22131_Proj2
 
         private void pbMapa_Paint(object sender, PaintEventArgs e)
         {
+            // Caso o usuário esteja na primeira guia:
             if (tabGuias.SelectedIndex == 0)
             {
                 int posAtual = cidades.PosicaoAtual;
@@ -357,6 +364,8 @@ namespace _22120_22131_Proj2
                 borda.Dispose();
                 preenchimento.Dispose();
             }
+
+            // Caso esteja na aba de busca:
             else
             {
                 Graphics graphics = e.Graphics;
@@ -393,6 +402,7 @@ namespace _22120_22131_Proj2
             }
         }
 
+        // Pega um objeto cidade pelo nome:
         private Cidade pegarCidadePorNome(string nome)
         {
             if(cidades.Existe(new Cidade(nome,0,0), out int pos))
@@ -406,7 +416,7 @@ namespace _22120_22131_Proj2
 
 
         // Busca:
-        Dictionary<string, int> indicesCidades;
+        Dictionary<string, int> indicesCidades; // Associa cada cidade a um índice.
 
         private void LerArquivoCaminhos()
         {
@@ -421,6 +431,7 @@ namespace _22120_22131_Proj2
 
                 ligacoes = new List<Ligacao>();
 
+                // Cria as ligações:
                 for (int i = 0; !leitor.EndOfStream; i++)
                 {
                     Ligacao ligacao = new Ligacao("", "", 0, 0, 0);
@@ -429,6 +440,7 @@ namespace _22120_22131_Proj2
 
                 indicesCidades = new Dictionary<string, int>();
 
+                // A partir
                 int index = 0;
                 foreach (Ligacao ligacao in ligacoes)
                 {
@@ -620,38 +632,29 @@ namespace _22120_22131_Proj2
 
         private void AdicionarNoDataGridView(List<List<int>> caminhos)
         {
-            // Clear existing data in the DataGridView
             dgvCaminhos.Rows.Clear();
             dgvCaminhos.Columns.Clear();
 
-            // Determine the maximum number of cells in the paths
             int maxCells = caminhos.Max(caminho => caminho.Count);
 
-            // Create columns in the DataGridView to accommodate the cells
             for (int i = 0; i < maxCells; i++)
             {
                 DataGridViewTextBoxColumn column = new DataGridViewTextBoxColumn();
                 dgvCaminhos.Columns.Add(column);
             }
 
-            // Iterate through each path in the list
             foreach (List<int> caminho in caminhos)
             {
-                // Create a new row for each path
                 DataGridViewRow row = new DataGridViewRow();
 
-                // Iterate through each city in the path
                 foreach (int cidade in caminho)
                 {
-                    // Create a new cell and set its value as the city
                     DataGridViewCell cell = new DataGridViewTextBoxCell();
                     cell.Value = cidade;
 
-                    // Add the cell to the row
                     row.Cells.Add(cell);
                 }
 
-                // Add the row to the DataGridView
                 dgvCaminhos.Rows.Add(row);
             }
         }
