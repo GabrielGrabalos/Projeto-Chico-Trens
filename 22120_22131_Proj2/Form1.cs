@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -16,7 +17,10 @@ namespace _22120_22131_Proj2
         ListaDupla<Cidade> cidades = new ListaDupla<Cidade>();
         Situacao situacao = Situacao.navegando;
 
-        int[,] caminhos;
+        int[,] matrizCaminhos;
+        List<Ligacao> ligacoes;
+        List<List<int>> caminhosEncontrados;
+        int melhorCaminhoIndex = -1;
 
         public Form1()
         {
@@ -326,31 +330,84 @@ namespace _22120_22131_Proj2
 
         private void pbMapa_Paint(object sender, PaintEventArgs e)
         {
-            int posAtual = cidades.PosicaoAtual;
-            cidades.PosicionarNoPrimeiro();
-
-            Pen borda = new Pen(Color.Black);
-            Brush preenchimento = new SolidBrush(Color.Yellow);
-
-            do
+            if (tabGuias.SelectedIndex == 0)
             {
-                Cidade cidade = cidades.DadoAtual();
+                int posAtual = cidades.PosicaoAtual;
+                cidades.PosicionarNoPrimeiro();
 
-                int pontoX = (int)(cidade.X * pbMapa.Bounds.Width) - 3;
-                int pontoY = (int)(cidade.Y * pbMapa.Bounds.Height) - 3;
+                Pen borda = new Pen(Color.Black);
+                Brush preenchimento = new SolidBrush(Color.Yellow);
 
-                e.Graphics.FillEllipse(preenchimento, pontoX, pontoY, 6, 6);
-                e.Graphics.DrawEllipse(borda, pontoX, pontoY, 6, 6);
+                do
+                {
+                    Cidade cidade = cidades.DadoAtual();
 
-                cidades.AvancarPosicao();
+                    int pontoX = (int)(cidade.X * pbMapa.Bounds.Width) - 3;
+                    int pontoY = (int)(cidade.Y * pbMapa.Bounds.Height) - 3;
 
-            } while (!cidades.EstaNoFim);
+                    e.Graphics.FillEllipse(preenchimento, pontoX, pontoY, 6, 6);
+                    e.Graphics.DrawEllipse(borda, pontoX, pontoY, 6, 6);
 
-            borda.Dispose();
-            preenchimento.Dispose();
+                    cidades.AvancarPosicao();
+
+                } while (!cidades.EstaNoFim);
+
+                cidades.PosicionarEm(posAtual);
+
+                borda.Dispose();
+                preenchimento.Dispose();
+            }
+            else
+            {
+                Graphics graphics = e.Graphics;
+                Pen pen = new Pen(Color.Black);
+
+                foreach (Ligacao ligacao in ligacoes)
+                {
+                    Cidade cidade1 = pegarCidadePorNome(ligacao.IdCidadeOrigem);
+                    int x1 = (int)(cidade1.X * pbMapa.Bounds.Width);
+                    int y1 = (int)(cidade1.Y * pbMapa.Bounds.Height);
+
+                    Cidade cidade2 = pegarCidadePorNome(ligacao.IdCidadeDestino);
+                    int x2 = (int)(cidade2.X * pbMapa.Bounds.Width);
+                    int y2 = (int)(cidade2.Y * pbMapa.Bounds.Height);
+
+                    graphics.DrawLine(pen, x1, y1, x2, y2);
+                }
+
+                try
+                {
+                    if (dgvMelhorCaminho.SelectedCells.Count > 0 && dgvMelhorCaminho.Focused)
+                    {
+                        DesenharUmCaminho(caminhosEncontrados[melhorCaminhoIndex], graphics);
+                    }
+                    else if (dgvCaminhos.SelectedCells.Count > 0)
+                    {
+                        DesenharUmCaminho(caminhosEncontrados[dgvCaminhos.SelectedCells[0].RowIndex], graphics);
+                    }
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Erro ao desenhar caminho. Verifique se os dados especificados estão crretos");
+                }
+            }
         }
 
+        private Cidade pegarCidadePorNome(string nome)
+        {
+            if(cidades.Existe(new Cidade(nome,0,0), out int pos))
+            {
+                cidades.PosicionarEm(pos);
+                return cidades.DadoAtual();
+            }
+
+            return null;
+        }
+
+
         // Busca:
+        Dictionary<string, int> indicesCidades;
+
         private void LerArquivoCaminhos()
         {
             MessageBox.Show("Selecione o arquivo de caminhos");
@@ -362,7 +419,7 @@ namespace _22120_22131_Proj2
             {
                 StreamReader leitor = new StreamReader(dlgAbrirCaminhos.FileName);
 
-                List<Ligacao> ligacoes = new List<Ligacao>();
+                ligacoes = new List<Ligacao>();
 
                 for (int i = 0; !leitor.EndOfStream; i++)
                 {
@@ -370,7 +427,7 @@ namespace _22120_22131_Proj2
                     ligacoes.Add(ligacao.LerRegistro(leitor));
                 }
 
-                Dictionary<string, int> indicesCidades = new Dictionary<string, int>();
+                indicesCidades = new Dictionary<string, int>();
 
                 int index = 0;
                 foreach (Ligacao ligacao in ligacoes)
@@ -392,7 +449,7 @@ namespace _22120_22131_Proj2
 
                 foreach (Ligacao ligacao in ligacoes)
                 {
-                    int origem  = indicesCidades[ligacao.IdCidadeOrigem];
+                    int origem = indicesCidades[ligacao.IdCidadeOrigem];
                     int destino = indicesCidades[ligacao.IdCidadeDestino];
 
                     int distance = ligacao.Distancia;
@@ -401,6 +458,13 @@ namespace _22120_22131_Proj2
                     caminhos[destino, origem] = distance;
                 }
 
+                foreach (string cidade in indicesCidades.Keys)
+                {
+                    cbOrigem.Items.Add(cidade);
+                    cbDestino.Items.Add(cidade);
+                }
+
+                matrizCaminhos = caminhos;
 
                 dlgAbrirCaminhos.Dispose();
             }
@@ -408,6 +472,242 @@ namespace _22120_22131_Proj2
             {
                 Close();
             }
+        }
+
+        public List<List<int>> BuscarCaminhos(int origem, int destino, int[,] matrizAdjacencia)
+        {
+            int qtasCidades = matrizAdjacencia.GetLength(0);
+
+            bool[] passou = new bool[qtasCidades];
+
+            List<List<int>> caminhos = new List<List<int>>();
+
+            Stack<int> pilha = new Stack<int>();
+
+            void Backtracking(int cidadeAtual)
+            {
+                pilha.Push(cidadeAtual);
+                passou[cidadeAtual] = true;
+
+                if (cidadeAtual == destino)
+                {
+                    caminhos.Add(pilha.ToList());
+                }
+                else
+                {
+                    for (int proximaCidade = 0; proximaCidade < qtasCidades; proximaCidade++)
+                    {
+                        if (!passou[proximaCidade] && matrizAdjacencia[cidadeAtual, proximaCidade] != 0)
+                        {
+                            Backtracking(proximaCidade);
+                            passou[proximaCidade] = false; // Resetting the visited flag for backtracking
+                            pilha.Pop(); // Removing the current city from the stack before moving to the next city
+                        }
+                    }
+                }
+            }
+
+            Backtracking(origem);
+            return caminhos;
+        }
+
+
+        private void btnAcharCaminhos_Click(object sender, EventArgs e)
+        {
+            indicesCidades.TryGetValue(cbOrigem.Text, out int keyOrigem);
+            indicesCidades.TryGetValue(cbDestino.Text, out int keyDestino);
+
+            caminhosEncontrados = BuscarCaminhos(keyOrigem, keyDestino, matrizCaminhos);
+
+            AdicionarNoDataGridView(caminhosEncontrados);
+            AdicionarMelhorNoDataGridView(caminhosEncontrados);
+        }
+
+        private void AdicionarMelhorNoDataGridView(List<List<int>> caminhosEncontrados)
+        {
+            List<int> melhorCaminho = AcharMelhorCaminho(caminhosEncontrados);
+            if (melhorCaminho != null)
+            {
+                // Add the best path to the DataGridView
+                dgvMelhorCaminho.Rows.Clear();
+                dgvMelhorCaminho.Columns.Clear();
+                dgvMelhorCaminho.Columns.Add("Melhor Caminho", "Melhor Caminho");
+
+                foreach (int cidade in melhorCaminho)
+                {
+                    DataGridViewRow row = new DataGridViewRow();
+                    DataGridViewCell cell = new DataGridViewTextBoxCell();
+                    cell.Value = cidade;
+                    row.Cells.Add(cell);
+
+                    dgvMelhorCaminho.Rows.Add(row);
+                }
+            }
+
+            lbMelhorCaminho.Text = $"Melhor caminho: ({TamanhoCaminho(melhorCaminho)} km)";
+        }
+
+        private int TamanhoCaminho(List<int> caminho)
+        {
+            int distanciaTotal = 0;
+            for (int i = 0; i < caminho.Count - 1; i++)
+            {
+                int cidadeOrigemIndex = caminho[i];
+                int cidadeDestinoIndex = caminho[i + 1];
+
+                Cidade cidadeOrigem = pegarCidadePorIndice(cidadeOrigemIndex);
+                Cidade cidadeDestino = pegarCidadePorIndice(cidadeDestinoIndex);
+
+                Ligacao ligacao = AcharLigacao(cidadeOrigem, cidadeDestino);
+
+                distanciaTotal += ligacao.Distancia;
+            }
+
+            return distanciaTotal;
+        }
+
+        private List<int> AcharMelhorCaminho(List<List<int>> caminhosEncontrados)
+        {
+            List<int> melhorCaminho = null;
+            int menorDistancia = int.MaxValue;
+            int index = 0;
+            int melhorIndex = 0;
+
+            foreach (List<int> caminho in caminhosEncontrados)
+            {
+                int distanciaTotal = 0;
+                for (int i = 0; i < caminho.Count - 1; i++)
+                {
+                    int cidadeOrigemIndex = caminho[i];
+                    int cidadeDestinoIndex = caminho[i + 1];
+
+                    Cidade cidadeOrigem = pegarCidadePorIndice(cidadeOrigemIndex);
+                    Cidade cidadeDestino = pegarCidadePorIndice(cidadeDestinoIndex);
+
+                    Ligacao ligacao = AcharLigacao(cidadeOrigem, cidadeDestino);
+
+                    distanciaTotal += ligacao.Distancia;
+                }
+
+                if (distanciaTotal < menorDistancia)
+                {
+                    menorDistancia = distanciaTotal;
+                    melhorCaminho = caminho;
+                    melhorIndex = index;
+                }
+
+                index++;
+            }
+
+            melhorCaminhoIndex = melhorIndex;
+            return melhorCaminho;
+        }
+
+        private Ligacao AcharLigacao(Cidade cidadeOrigem, Cidade cidadeDestino)
+        {
+            foreach (Ligacao ligacao in ligacoes)
+            {
+                if (ligacao.IdCidadeOrigem == cidadeOrigem.Nome && ligacao.IdCidadeDestino == cidadeDestino.Nome||
+                    ligacao.IdCidadeOrigem == cidadeDestino.Nome && ligacao.IdCidadeDestino == cidadeOrigem.Nome)
+                {
+                    return ligacao;
+                }
+            }
+
+            return null;
+        }
+
+
+        private void AdicionarNoDataGridView(List<List<int>> caminhos)
+        {
+            // Clear existing data in the DataGridView
+            dgvCaminhos.Rows.Clear();
+            dgvCaminhos.Columns.Clear();
+
+            // Determine the maximum number of cells in the paths
+            int maxCells = caminhos.Max(caminho => caminho.Count);
+
+            // Create columns in the DataGridView to accommodate the cells
+            for (int i = 0; i < maxCells; i++)
+            {
+                DataGridViewTextBoxColumn column = new DataGridViewTextBoxColumn();
+                dgvCaminhos.Columns.Add(column);
+            }
+
+            // Iterate through each path in the list
+            foreach (List<int> caminho in caminhos)
+            {
+                // Create a new row for each path
+                DataGridViewRow row = new DataGridViewRow();
+
+                // Iterate through each city in the path
+                foreach (int cidade in caminho)
+                {
+                    // Create a new cell and set its value as the city
+                    DataGridViewCell cell = new DataGridViewTextBoxCell();
+                    cell.Value = cidade;
+
+                    // Add the cell to the row
+                    row.Cells.Add(cell);
+                }
+
+                // Add the row to the DataGridView
+                dgvCaminhos.Rows.Add(row);
+            }
+        }
+
+
+
+        private void DesenharUmCaminho(List<int> caminho, Graphics g)
+        {
+            var pen = new Pen(Color.Red, 5);
+
+            for (int i = 0; i < caminho.Count - 1; i++)
+            {
+                int cidadeOrigemIndex = caminho[i];
+                int cidadeDestinoIndex = caminho[i + 1];
+
+                Cidade cidadeOrigem = pegarCidadePorIndice(cidadeOrigemIndex);
+                Cidade cidadeDestino = pegarCidadePorIndice(cidadeDestinoIndex);
+
+                int x1 = (int)(cidadeOrigem.X * pbMapa.Width);
+                int y1 = (int)(cidadeOrigem.Y * pbMapa.Height);
+                int x2 = (int)(cidadeDestino.X * pbMapa.Width);
+                int y2 = (int)(cidadeDestino.Y * pbMapa.Height);
+
+                g.DrawLine(pen, x1, y1, x2, y2);
+            }
+
+            pen.Dispose();
+        }
+
+        private Cidade pegarCidadePorIndice(int cidadeOrigemIndex)
+        {
+            foreach (var cidade in indicesCidades)
+            {
+                if (cidade.Value == cidadeOrigemIndex)
+                {
+                    return pegarCidadePorNome(cidade.Key);
+                }
+            }
+
+            return null;
+        }
+
+        private void tabGuias_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            pbMapa.Invalidate();
+        }
+
+        private void dgvCaminhos_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            pbMapa.Invalidate();
+            lbCaminhoSelecionado.Text = $"Km do caminho selecionado: ({TamanhoCaminho(caminhosEncontrados[dgvCaminhos.SelectedCells[0].RowIndex])} km)";
+        }
+
+        private void dgvMelhorCaminho_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            pbMapa.Invalidate();
         }
     }
 }

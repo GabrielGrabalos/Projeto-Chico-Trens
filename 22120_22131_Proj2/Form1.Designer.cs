@@ -67,18 +67,18 @@
             this.Column5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.label5 = new System.Windows.Forms.Label();
-            this.label6 = new System.Windows.Forms.Label();
+            this.lbCaminhoSelecionado = new System.Windows.Forms.Label();
             this.tabGuias = new System.Windows.Forms.TabControl();
             this.tbCidades = new System.Windows.Forms.TabPage();
             this.tbBusca = new System.Windows.Forms.TabPage();
             this.btnAcharCaminhos = new System.Windows.Forms.Button();
             this.label8 = new System.Windows.Forms.Label();
+            this.lbMelhorCaminho = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.dgvMelhorCaminho = new System.Windows.Forms.DataGridView();
+            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.cbDestino = new System.Windows.Forms.ComboBox();
             this.cbOrigem = new System.Windows.Forms.ComboBox();
-            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.label9 = new System.Windows.Forms.Label();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.gbCidades.SuspendLayout();
@@ -384,6 +384,7 @@
             this.dgvCaminhos.ReadOnly = true;
             this.dgvCaminhos.Size = new System.Drawing.Size(564, 150);
             this.dgvCaminhos.TabIndex = 5;
+            this.dgvCaminhos.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvCaminhos_CellClick);
             // 
             // caminho1
             // 
@@ -443,15 +444,15 @@
             this.label5.TabIndex = 6;
             this.label5.Text = "Caminhos encontrados:";
             // 
-            // label6
+            // lbCaminhoSelecionado
             // 
-            this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(11, 524);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(278, 20);
-            this.label6.TabIndex = 6;
-            this.label6.Text = "Km do caminho selecionado: (xxxx km)";
+            this.lbCaminhoSelecionado.AutoSize = true;
+            this.lbCaminhoSelecionado.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbCaminhoSelecionado.Location = new System.Drawing.Point(11, 524);
+            this.lbCaminhoSelecionado.Name = "lbCaminhoSelecionado";
+            this.lbCaminhoSelecionado.Size = new System.Drawing.Size(278, 20);
+            this.lbCaminhoSelecionado.TabIndex = 6;
+            this.lbCaminhoSelecionado.Text = "Km do caminho selecionado: (xxxx km)";
             // 
             // tabGuias
             // 
@@ -464,6 +465,7 @@
             this.tabGuias.SelectedIndex = 0;
             this.tabGuias.Size = new System.Drawing.Size(289, 455);
             this.tabGuias.TabIndex = 4;
+            this.tabGuias.SelectedIndexChanged += new System.EventHandler(this.tabGuias_SelectedIndexChanged);
             // 
             // tbCidades
             // 
@@ -480,7 +482,7 @@
             // 
             this.tbBusca.Controls.Add(this.btnAcharCaminhos);
             this.tbBusca.Controls.Add(this.label8);
-            this.tbBusca.Controls.Add(this.label9);
+            this.tbBusca.Controls.Add(this.lbMelhorCaminho);
             this.tbBusca.Controls.Add(this.label7);
             this.tbBusca.Controls.Add(this.dgvMelhorCaminho);
             this.tbBusca.Controls.Add(this.cbDestino);
@@ -501,6 +503,7 @@
             this.btnAcharCaminhos.TabIndex = 2;
             this.btnAcharCaminhos.Text = "Achar caminhos";
             this.btnAcharCaminhos.UseVisualStyleBackColor = true;
+            this.btnAcharCaminhos.Click += new System.EventHandler(this.btnAcharCaminhos_Click);
             // 
             // label8
             // 
@@ -511,6 +514,16 @@
             this.label8.Size = new System.Drawing.Size(68, 20);
             this.label8.TabIndex = 1;
             this.label8.Text = "Destino:";
+            // 
+            // lbMelhorCaminho
+            // 
+            this.lbMelhorCaminho.AutoSize = true;
+            this.lbMelhorCaminho.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbMelhorCaminho.Location = new System.Drawing.Point(42, 151);
+            this.lbMelhorCaminho.Name = "lbMelhorCaminho";
+            this.lbMelhorCaminho.Size = new System.Drawing.Size(192, 20);
+            this.lbMelhorCaminho.TabIndex = 1;
+            this.lbMelhorCaminho.Text = "Melhor caminho: (yyyy km)";
             // 
             // label7
             // 
@@ -535,6 +548,13 @@
             this.dgvMelhorCaminho.ReadOnly = true;
             this.dgvMelhorCaminho.Size = new System.Drawing.Size(269, 249);
             this.dgvMelhorCaminho.TabIndex = 5;
+            this.dgvMelhorCaminho.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvMelhorCaminho_CellClick);
+            // 
+            // dataGridViewTextBoxColumn1
+            // 
+            this.dataGridViewTextBoxColumn1.HeaderText = "Passando por";
+            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
+            this.dataGridViewTextBoxColumn1.ReadOnly = true;
             // 
             // cbDestino
             // 
@@ -552,29 +572,13 @@
             this.cbOrigem.Size = new System.Drawing.Size(121, 21);
             this.cbOrigem.TabIndex = 0;
             // 
-            // dataGridViewTextBoxColumn1
-            // 
-            this.dataGridViewTextBoxColumn1.HeaderText = "Passando por";
-            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
-            this.dataGridViewTextBoxColumn1.ReadOnly = true;
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label9.Location = new System.Drawing.Point(42, 151);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(192, 20);
-            this.label9.TabIndex = 1;
-            this.label9.Text = "Melhor caminho: (yyyy km)";
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(858, 677);
             this.Controls.Add(this.tabGuias);
-            this.Controls.Add(this.label6);
+            this.Controls.Add(this.lbCaminhoSelecionado);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.dgvCaminhos);
             this.Controls.Add(this.pbMapa);
@@ -646,7 +650,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Column5;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column6;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label lbCaminhoSelecionado;
         private System.Windows.Forms.TabControl tabGuias;
         private System.Windows.Forms.TabPage tbCidades;
         private System.Windows.Forms.TabPage tbBusca;
@@ -656,7 +660,7 @@
         private System.Windows.Forms.DataGridView dgvMelhorCaminho;
         private System.Windows.Forms.ComboBox cbDestino;
         private System.Windows.Forms.ComboBox cbOrigem;
-        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.Label lbMelhorCaminho;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
     }
 }
