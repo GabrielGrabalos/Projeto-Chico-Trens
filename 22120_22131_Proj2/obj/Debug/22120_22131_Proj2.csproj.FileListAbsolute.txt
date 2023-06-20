@@ -31,3 +31,14 @@ C:\Users\u22131\Desktop\22120_22131_Proj2\obj\Debug\22120_22131_Proj2.csproj.Gen
 C:\Users\u22131\Desktop\22120_22131_Proj2\obj\Debug\22120_22131_Proj2.csproj.CoreCompileInputs.cache
 C:\Users\u22131\Desktop\22120_22131_Proj2\obj\Debug\22120_22131_Proj2.exe
 C:\Users\u22131\Desktop\22120_22131_Proj2\obj\Debug\22120_22131_Proj2.pdb
+C:\Users\u22131\Documents\GitHub\Projeto-Chico-Trens\22120_22131_Proj2\bin\Debug\22120_22131_Proj2.exe.config
+C:\Users\u22131\Documents\GitHub\Projeto-Chico-Trens\22120_22131_Proj2\bin\Debug\22120_22131_Proj2.exe
+C:\Users\u22131\Documents\GitHub\Projeto-Chico-Trens\22120_22131_Proj2\bin\Debug\22120_22131_Proj2.pdb
+C:\Users\u22131\Documents\GitHub\Projeto-Chico-Trens\22120_22131_Proj2\obj\Debug\22120_22131_Proj2.csproj.AssemblyReference.cache
+C:\Users\u22131\Documents\GitHub\Projeto-Chico-Trens\22120_22131_Proj2\obj\Debug\22120_22131_Proj2.csproj.SuggestedBindingRedirects.cache
+C:\Users\u22131\Documents\GitHub\Projeto-Chico-Trens\22120_22131_Proj2\obj\Debug\_22120_22131_Proj2.Form1.resources
+C:\Users\u22131\Documents\GitHub\Projeto-Chico-Trens\22120_22131_Proj2\obj\Debug\_22120_22131_Proj2.Properties.Resources.resources
+C:\Users\u22131\Documents\GitHub\Projeto-Chico-Trens\22120_22131_Proj2\obj\Debug\22120_22131_Proj2.csproj.GenerateResource.cache
+C:\Users\u22131\Documents\GitHub\Projeto-Chico-Trens\22120_22131_Proj2\obj\Debug\22120_22131_Proj2.csproj.CoreCompileInputs.cache
+C:\Users\u22131\Documents\GitHub\Projeto-Chico-Trens\22120_22131_Proj2\obj\Debug\22120_22131_Proj2.exe
+C:\Users\u22131\Documents\GitHub\Projeto-Chico-Trens\22120_22131_Proj2\obj\Debug\22120_22131_Proj2.pdb

@@ -16,11 +16,13 @@ namespace _22120_22131_Proj2
         ListaDupla<Cidade> cidades = new ListaDupla<Cidade>();
         Situacao situacao = Situacao.navegando;
 
+        int[,] caminhos;
+
         public Form1()
         {
             InitializeComponent();
 
-            if (dlgAbrir.ShowDialog() != DialogResult.OK) 
+            if (dlgAbrir.ShowDialog() != DialogResult.OK)
             {
                 Close();
                 return;
@@ -30,6 +32,8 @@ namespace _22120_22131_Proj2
 
             cidades.PosicionarNoPrimeiro();
             ExibirCidadeAtual();
+
+            LerArquivoCaminhos();
 
             AtualizarBotoes();
         }
@@ -185,16 +189,18 @@ namespace _22120_22131_Proj2
             lbCidades.Focus();
 
             AtualizarBotoes();
+
+            pbMapa.Invalidate();
         }
 
         private void btnExcluir_Click(object sender, EventArgs e)
         {
             situacao = Situacao.excluindo;
 
-            if(MessageBox.Show(
-                "Deseja realmente excluir este item?", 
-                "Exclusão", 
-                MessageBoxButtons.YesNo, 
+            if (MessageBox.Show(
+                "Deseja realmente excluir este item?",
+                "Exclusão",
+                MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning) == DialogResult.Yes)
             {
                 int posAnterior = cidades.PosicaoAtual;
@@ -264,7 +270,7 @@ namespace _22120_22131_Proj2
                 btnExcluir.Enabled = false;
                 btnSair.Enabled = true;
             }
-            else if(situacao == Situacao.pesquisando)
+            else if (situacao == Situacao.pesquisando)
             {
                 btnInicio.Enabled = false;
                 btnProximo.Enabled = false;
@@ -316,6 +322,92 @@ namespace _22120_22131_Proj2
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             cidades.GravarDados(dlgAbrir.FileName);
+        }
+
+        private void pbMapa_Paint(object sender, PaintEventArgs e)
+        {
+            int posAtual = cidades.PosicaoAtual;
+            cidades.PosicionarNoPrimeiro();
+
+            Pen borda = new Pen(Color.Black);
+            Brush preenchimento = new SolidBrush(Color.Yellow);
+
+            do
+            {
+                Cidade cidade = cidades.DadoAtual();
+
+                int pontoX = (int)(cidade.X * pbMapa.Bounds.Width) - 3;
+                int pontoY = (int)(cidade.Y * pbMapa.Bounds.Height) - 3;
+
+                e.Graphics.FillEllipse(preenchimento, pontoX, pontoY, 6, 6);
+                e.Graphics.DrawEllipse(borda, pontoX, pontoY, 6, 6);
+
+                cidades.AvancarPosicao();
+
+            } while (!cidades.EstaNoFim);
+
+            borda.Dispose();
+            preenchimento.Dispose();
+        }
+
+        // Busca:
+        private void LerArquivoCaminhos()
+        {
+            MessageBox.Show("Selecione o arquivo de caminhos");
+
+            OpenFileDialog dlgAbrirCaminhos = new OpenFileDialog();
+            dlgAbrirCaminhos.FilterIndex = 1;
+
+            if (dlgAbrirCaminhos.ShowDialog() == DialogResult.OK)
+            {
+                StreamReader leitor = new StreamReader(dlgAbrirCaminhos.FileName);
+
+                List<Ligacao> ligacoes = new List<Ligacao>();
+
+                for (int i = 0; !leitor.EndOfStream; i++)
+                {
+                    Ligacao ligacao = new Ligacao("", "", 0, 0, 0);
+                    ligacoes.Add(ligacao.LerRegistro(leitor));
+                }
+
+                Dictionary<string, int> indicesCidades = new Dictionary<string, int>();
+
+                int index = 0;
+                foreach (Ligacao ligacao in ligacoes)
+                {
+                    if (!indicesCidades.ContainsKey(ligacao.IdCidadeOrigem))
+                    {
+                        indicesCidades.Add(ligacao.IdCidadeOrigem, index);
+                        index++;
+                    }
+                    if (!indicesCidades.ContainsKey(ligacao.IdCidadeDestino))
+                    {
+                        indicesCidades.Add(ligacao.IdCidadeDestino, index);
+                        index++;
+                    }
+                }
+
+                int qtdCidades = indicesCidades.Count;
+                int[,] caminhos = new int[qtdCidades, qtdCidades];
+
+                foreach (Ligacao ligacao in ligacoes)
+                {
+                    int origem  = indicesCidades[ligacao.IdCidadeOrigem];
+                    int destino = indicesCidades[ligacao.IdCidadeDestino];
+
+                    int distance = ligacao.Distancia;
+
+                    caminhos[origem, destino] = distance;
+                    caminhos[destino, origem] = distance;
+                }
+
+
+                dlgAbrirCaminhos.Dispose();
+            }
+            else
+            {
+                Close();
+            }
         }
     }
 }
